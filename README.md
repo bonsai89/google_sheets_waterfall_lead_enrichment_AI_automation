@@ -1,6 +1,6 @@
-# LinkedIn Lead Enrichment System
+# Clay style Waterfall LinkedIn Lead Enrichment System using Google Sheets
 
-Clay style fully customizable waterfall lead enriching system that is 10x cheaper and scales efficiently fully hosted on Google sheets.
+Clay style fully customizable waterfall lead enriching system that is 10x cheaper and scales efficiently fully hosted on Google sheets. Using openAI and real time webscraping.
 
 ## Overview
 
@@ -17,3 +17,6 @@ This system automates the process of:
 - **Batch Processing**: Handles large set of leads in chunks
 - **Error Handling**: Robust error handling and retry mechanisms
 - **Rate Limiting**: Respects API rate limits and GDPR rules
+
+## Hire Me for Custom AI Automation Solutions
+For bespoke AI automation solutions, including **web scraping** with **Selenium**, **n8n workflows**, **proxy IP rotation**, **API integrations**, **AI agents**, **RAG+**, and **LLM prompt engineering**, contact me on Telegram at [@bonsai_habibi](https://t.me/bonsai_habibi). I specialize in crafting tailored tools to optimize your processes and meet your unique requirements.
