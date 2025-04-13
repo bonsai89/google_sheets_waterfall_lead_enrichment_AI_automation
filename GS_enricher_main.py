@@ -4,7 +4,7 @@ import pandas as pd
 import requests
 import time
 from config import GOOGLE_SHEETS, BRIGHT_DATA
-from snapshot_monitor import process_snapshots, process_profile_snapshots, process_company_snapshots
+from snapshot_monitor import process_profile_snapshots, process_company_snapshots, update_lead_scores
 
 def get_google_sheet_client():
     """Initialize and return Google Sheets client."""
@@ -276,6 +276,9 @@ def main():
         else:
             print("\nℹ️ No company links found or current_company column not available yet")
         
+        # After all processing is complete, update lead scores
+        print("\n📊 Starting lead scoring...")
+        update_lead_scores()
     except Exception as e:
         print(f"❌ An error occurred: {str(e)}")
 

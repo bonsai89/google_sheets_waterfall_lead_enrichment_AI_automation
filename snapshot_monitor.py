@@ -5,7 +5,8 @@ import time
 from datetime import datetime, timedelta
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from config import GOOGLE_SHEETS, BRIGHT_DATA
+from config import GOOGLE_SHEETS, BRIGHT_DATA, OPENAI, LEAD_SCORING
+import openai
 
 # Constants
 SNAPSHOTS_LIST_URL = "https://api.brightdata.com/datasets/v3/snapshots"
@@ -423,6 +424,10 @@ def update_google_sheet(snapshot_data, snapshot_id, is_company=False):
                 # Format the value into a human-readable string
                 formatted_value = format_company_value(value) if is_company else format_value(value)
                 
+                # Add 'enriched_' prefix to company fields
+                if is_company:
+                    key = f'enriched_{key}'
+                
                 # Sort fields into ordered and other categories
                 if key in column_order:
                     ordered_fields[key] = (column_order[key], formatted_value)
@@ -802,35 +807,140 @@ def process_company_snapshots():
         # Wait before next check
         time.sleep(30)
 
-def process_snapshots():
-    """Main function to monitor and process snapshots."""
-    ensure_directories()
-    
-    # First process all profile snapshots
-    process_profile_snapshots()
-    
-    # Check if current_company column exists before processing company snapshots
+def score_lead(row_data):
+    """Score a lead using OpenAI based on configured criteria."""
+    try:
+        # Extract required fields from row data
+        field_values = {}
+        for field in LEAD_SCORING['fields']:
+            field_values[field] = row_data.get(field, '')
+        
+        # Format the prompt with actual values
+        prompt = LEAD_SCORING['prompt'].format(
+            position=field_values['position'],
+            about=field_values['about'],
+            website=field_values['enriched_website'],
+            country_codes=field_values['enriched_country_codes'],
+            company_about=field_values['enriched_unformatted_about'],
+            crunchbase_url=field_values['enriched_crunchbase_url']
+        )
+        
+        # Initialize OpenAI client
+        openai.api_key = OPENAI['api_key']
+        
+        # Get score from OpenAI
+        response = openai.ChatCompletion.create(
+            model=OPENAI['model'],
+            messages=[
+                {"role": "system", "content": "You are an expert in global business analysis and language service consulting. Use given data and company press releases, News for research. Do not hallucinate."},
+                {"role": "user", "content": prompt}
+            ],
+            timeout=OPENAI['timeout']
+        )
+        
+        # Extract score from response
+        score = response.choices[0].message.content.strip()
+        try:
+            score = float(score)
+            return min(max(score, 0), 10)  # Ensure score is between 0-10
+        except ValueError:
+            print(f"❌ Invalid score received: {score}")
+            return 0
+            
+    except Exception as e:
+        print(f"❌ Error scoring lead: {str(e)}")
+        return 0
+
+def update_lead_scores():
+    """Update lead scores for all rows in the sheet."""
     try:
         client = get_google_sheet_client()
         sheet = client.open(GOOGLE_SHEETS['sheet_name'])
         worksheet = sheet.worksheet(GOOGLE_SHEETS['worksheet_name'])
-        headers = worksheet.row_values(1)
         
-        if 'current_company' in headers:
-            print("\n🏢 Found current_company column, starting company snapshot processing...")
-            process_company_snapshots()
+        # Get all data
+        all_data = worksheet.get_all_values()
+        headers = all_data[0]
+        
+        # Add lead_score column as second column if it doesn't exist
+        if 'lead_score' not in headers:
+            # Insert new column at position 2 (after URL column)
+            worksheet.insert_cols([['lead_score']], 2)
+            lead_score_col = 2
+            headers.insert(1, 'lead_score')
         else:
-            print("\nℹ️ current_company column not found yet. Company processing will start after profile processing is complete.")
+            # If lead_score exists, move it to second position
+            lead_score_col = headers.index('lead_score') + 1
+            if lead_score_col != 2:
+                # Move the column to second position
+                worksheet.insert_cols([['lead_score']], 2)
+                # Delete the old column
+                worksheet.delete_columns(lead_score_col + 1, 1)
+                lead_score_col = 2
+                headers.remove('lead_score')
+                headers.insert(1, 'lead_score')
+        
+        # Process each row (skip header)
+        for i, row in enumerate(all_data[1:], start=2):  # Start from row 2
+            # Create dictionary of row data
+            row_data = dict(zip(headers, row))
+            
+            # Skip if already scored
+            if row_data.get('lead_score'):
+                continue
+                
+            print(f"🔍 Scoring lead {i-1}/{len(all_data)-1}")
+            score = score_lead(row_data)
+            
+            # Update score in second column
+            worksheet.update_cell(i, lead_score_col, score)
+            time.sleep(SHEETS_UPDATE_DELAY)  # Respect rate limits
+            
+        print("✅ Lead scoring completed")
+        
     except Exception as e:
-        print(f"❌ Error checking for current_company column: {str(e)}")
+        print(f"❌ Error updating lead scores: {str(e)}")
 
-def main():
-    try:
-        process_snapshots()
-    except KeyboardInterrupt:
-        print("\n👋 Script stopped by user")
-    except Exception as e:
-        print(f"❌ An error occurred: {str(e)}")
+# def process_snapshots():
+#     """Main function to monitor and process snapshots."""
+#     ensure_directories()
+    
+#     # First process all profile snapshots
+#     process_profile_snapshots()
+    
+#     # Check if current_company column exists before processing company snapshots
+#     try:
+#         client = get_google_sheet_client()
+#         sheet = client.open(GOOGLE_SHEETS['sheet_name'])
+#         worksheet = sheet.worksheet(GOOGLE_SHEETS['worksheet_name'])
+#         headers = worksheet.row_values(1)
+        
+#         if 'current_company' in headers:
+#             print("\n🏢 Found current_company column, starting company snapshot processing...")
+#             process_company_snapshots()
+#         else:
+#             print("\nℹ️ current_company column not found yet. Company processing will start after profile processing is complete.")
+            
+#         # After all processing is complete, update lead scores
+#         print("\n📊 Starting lead scoring...")
+#         update_lead_scores()
+        
+#     except Exception as e:
+#         print(f"❌ Error checking for current_company column: {str(e)}")
+#         # Even if there's an error, try to update lead scores
+#         try:
+#             print("\n📊 Starting lead scoring...")
+#             update_lead_scores()
+#         except Exception as scoring_error:
+#             print(f"❌ Error during lead scoring: {str(scoring_error)}")
 
-if __name__ == "__main__":
-    main()
+# def main():
+#     try:
+#         process_snapshots()
+#     except KeyboardInterrupt:
+#         print("\n👋 Script stopped by user")
+#     except Exception as e:
+#         print(f"❌ An error occurred: {str(e)}")
+
+# if __name__ == "__main__":
+#     main()
