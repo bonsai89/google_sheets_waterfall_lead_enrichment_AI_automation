@@ -7,6 +7,19 @@ Enrich your leads locally on your laptop, go about running your business.
 
 Each lead enrichment estimated costs ~0.003$/lead
 
+## Demo Video
+
+Click the thumbnail below to open the demo video in a new tab: 
+
+<div style="display: flex; justify-content: center;">
+  <a href="Weavlog_waterfall_lead_enrichment_demo.mp4" target="_blank">
+    <img src="weavlog_lead_enricher_thumbnail.png" alt="Thumbnail for Binance Bot Trade Demo Video" width="600">
+  </a>
+</div>
+
+(if you are unable to view, click 'View raw' to download it: [Weavlog_waterfall_lead_enrichment_demo.mp4](https://github.com/bonsai89/google_sheets_waterfall_lead_enrichment_AI_automation/blob/main/Weavlog_waterfall_lead_enrichment_demo.mp4))
+
+
 ## Overview
 
 This system automates the process of:
