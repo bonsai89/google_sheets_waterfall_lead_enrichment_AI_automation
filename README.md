@@ -1,4 +1,4 @@
-# Clay style Waterfall LinkedIn Lead Enrichment System using Google Sheets
+# Fully Custom Built Clay style Waterfall LinkedIn Lead Enrichment System using Google Sheets - 10x Cheaper
 
 Clay style fully customizable waterfall lead enriching system that is 10x cheaper and scales efficiently fully hosted on Google sheets. Using openAI and real time webscraping.
 
