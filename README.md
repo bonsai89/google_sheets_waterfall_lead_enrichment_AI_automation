@@ -13,6 +13,7 @@ This system automates the process of:
 - Reading LinkedIn profile and company URLs from Google Sheets
 - Enriching data using Bright Data's LinkedIn scraping capabilities and serperAI API for real-time webscraping and enriching.
 - Scoring leads based on enrichment and custom GPT prompting and ready for integration with any Cold emailing infrastructure.
+- Optional integration with email verification services (Findymail, Prospeo, Dropcontact) for verified contact information
 
 ## Features
 
@@ -22,6 +23,11 @@ This system automates the process of:
 - **Batch Processing**: Handles large set of leads in chunks
 - **Error Handling**: Robust error handling and retry mechanisms
 - **Rate Limiting**: Respects API rate limits and GDPR compliant
+- **Email Enrichment**: Optional integration with leading email verification services:
+  - [Findymail](https://findymail.com): High-accuracy email finding and verification
+  - [Prospeo](https://prospeo.io): Professional email verification and enrichment
+  - [Dropcontact](https://dropcontact.io): Multi-source email verification and enrichment
+
 
 ## Hire Me for Custom AI Automation Solutions
 For bespoke AI automation solutions, including **web scraping** with **Selenium**, **n8n workflows**, **proxy IP rotation**, **API integrations**, **AI agents**, **RAG+**, and **LLM prompt engineering**, contact me on Telegram at [@bonsai_habibi](https://t.me/bonsai_habibi). I specialize in crafting tailored tools to optimize your processes and meet your unique requirements.
